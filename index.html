@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload e Visualização de Imagens</title>
+</head>
+<body>
+    <input type="file" id="fileInput">
+    <input type="text" id="imageNameInput" placeholder="Nome da imagem">
+    <button onclick="uploadImage()">Enviar Imagem</button>
+    <button onclick="getImage()">Obter Imagem</button>
+    <button onclick="getImages()">Ver Imagens Salvas</button>
+    <button onclick="deleteAllImages()">Apagar Todas as Imagens</button>
+    <button onclick="deleteImage()">Apagar Imagem</button>
+    
+    <div id="imageContainer"></div>
+    <div id="progress"></div>
+    <div id="errorMessage"></div>
+
+    <!-- Adicione o script do Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-storage.js"></script>
+
+    <script>
+        // Configurações do seu projeto do Firebase
+        var firebaseConfig = {
+            apiKey: "AIzaSyAFkzOxbKE-Z_HCyM_-n9TBiTLC6Mj_okM",
+    authDomain: "imagem-622f1.firebaseapp.com",
+    projectId: "imagem-622f1",
+    storageBucket: "imagem-622f1.appspot.com",
+    messagingSenderId: "499802832954",
+    appId: "1:499802832954:web:1235c8dd25934522873503",
+    measurementId: "G-61DRG1LHWZ"
+        };
+
+        // Inicializa o Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Referência para o Storage do Firebase
+        var storage = firebase.storage();
+
+        // Função para enviar a imagem para o Firebase Storage
+        function uploadImage() {
+            var file = document.getElementById("fileInput").files[0];
+            var imageName = document.getElementById("imageNameInput").value;
+            var storageRef = storage.ref('imagens/' + imageName);
+            var uploadTask = storageRef.put(file);
+
+            uploadTask.on('state_changed', 
+                function(snapshot){
+                    var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    document.getElementById('progress').innerText = 'Progresso: ' + progress + '%';
+                }, 
+                function(error) {
+                    document.getElementById('errorMessage').innerText = 'Erro ao enviar imagem: ' + error.message;
+                }, 
+                function() {
+                    console.log('Imagem enviada com sucesso!');
+                    document.getElementById('progress').innerText = '';
+                    document.getElementById('errorMessage').innerText = '';
+                }
+            );
+        }
+
+        // Função para obter uma imagem específica pelo nome
+        function getImage() {
+            var imageName = document.getElementById("imageNameInput").value;
+            var imageRef = storage.ref('imagens/' + imageName);
+            imageRef.getDownloadURL().then(function(url) {
+                // Limpa o conteúdo anterior do contêiner de imagem
+                document.getElementById('imageContainer').innerHTML = '';
+
+                // Cria uma nova imagem e define o URL da imagem recuperada
+                var img = document.createElement('img');
+                img.src = url;
+
+                // Adiciona a imagem ao contêiner de imagem
+                document.getElementById('imageContainer').appendChild(img);
+            }).catch(function(error) {
+                // Exibe uma mensagem de erro se a imagem não puder ser recuperada
+                document.getElementById('errorMessage').innerText = 'Erro ao obter imagem: ' + error.message;
+            });
+        }
+
+        // Função para obter todas as imagens salvas no Firebase Storage
+        function getImages() {
+            var imagesRef = storage.ref('imagens');
+            imagesRef.listAll().then(function(result) {
+                // Limpa o conteúdo anterior do contêiner de imagem
+                document.getElementById('imageContainer').innerHTML = '';
+
+                result.items.forEach(function(imageRef) {
+                    imageRef.getDownloadURL().then(function(url) {
+                        // Cria uma nova imagem e define o URL da imagem recuperada
+                        var img = document.createElement('img');
+                        img.src = url;
+
+                        // Adiciona a imagem ao contêiner de imagem
+                        document.getElementById('imageContainer').appendChild(img);
+                    }).catch(function(error) {
+                        console.error('Erro ao obter URL da imagem:', error);
+                    });
+                });
+            }).catch(function(error) {
+                console.error('Erro ao listar imagens:', error);
+            });
+        }
+
+        // Função para apagar todas as imagens
+        function deleteAllImages() {
+            var imagesRef = storage.ref('imagens');
+            imagesRef.listAll().then(function(result) {
+                result.items.forEach(function(imageRef) {
+                    imageRef.delete().then(function() {
+                        console.log('Imagem apagada com sucesso!');
+                    }).catch(function(error) {
+                        console.error('Erro ao apagar imagem:', error);
+                    });
+                });
+            }).catch(function(error) {
+                console.error('Erro ao listar imagens:', error);
+            });
+        }
+
+        // Função para apagar uma imagem específica pelo nome
+        function deleteImage() {
+            var imageName = document.getElementById("imageNameInput").value;
+            var imageRef = storage.ref('imagens/' + imageName);
+            imageRef.delete().then(function() {
+                console.log('Imagem apagada com sucesso!');
+            }).catch(function(error) {
+                console.error('Erro ao apagar imagem:', error);
+            });
+        }
+    </script>
+</body>
+</html>

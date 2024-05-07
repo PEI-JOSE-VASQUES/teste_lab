@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Salvar e Mostrar Textos</title>
+<!-- Importar Firebase compatível com a sintaxe -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+<script>
+  // Initialize Firebase
+  const firebaseConfig = {
+        apiKey: "AIzaSyAFkzOxbKE-Z_HCyM_-n9TBiTLC6Mj_okM",
+    authDomain: "imagem-622f1.firebaseapp.com",
+    projectId: "imagem-622f1",
+    storageBucket: "imagem-622f1.appspot.com",
+    messagingSenderId: "499802832954",
+    appId: "1:499802832954:web:1235c8dd25934522873503",
+    measurementId: "G-61DRG1LHWZ"
+      };
+  firebase.initializeApp(firebaseConfig);
+
+  var storage = firebase.storage();
+  var storageRef = storage.ref();
+
+  var textos = [];
+
+  function salvarTexto() {
+    var titulo = document.getElementById('tituloInput').value;
+    var texto = document.getElementById('textoInput').value;
+    var nomeArquivo = titulo + ".txt"; // Nome do arquivo baseado no título
+
+    var arquivoRef = storageRef.child(nomeArquivo);
+    arquivoRef.putString(texto)
+      .then(() => {
+        textos.push({ titulo, nomeArquivo });
+        alert('Texto salvo com sucesso!');
+      })
+      .catch(error => {
+        console.error('Erro ao salvar o texto:', error);
+      });
+  }
+
+  function mostrarTextos() {
+    var outputDiv = document.getElementById('output');
+    outputDiv.innerHTML = ''; // Limpa o conteúdo anterior
+
+    textos.forEach(item => {
+      var arquivoRef = storageRef.child(item.nomeArquivo);
+      arquivoRef.getDownloadURL() // Obtém o URL do arquivo
+        .then(url => {
+          fetch(url) // Faz uma solicitação HTTP para obter o conteúdo do arquivo
+            .then(response => response.text())
+            .then(content => {
+              outputDiv.innerHTML += "<p><strong>" + item.titulo + ":</strong> " + content + "</p>";
+            })
+            .catch(error => {
+              console.error('Erro ao obter o conteúdo do arquivo:', error);
+            });
+        })
+        .catch(error => {
+          console.error('Erro ao obter o URL do arquivo:', error);
+        });
+    });
+  }
+</script>
+</head>
+<body>
+    <h2>Salvar e Mostrar Textos</h2>
+    <label for="tituloInput">Título:</label>
+    <input type="text" id="tituloInput">
+    <br>
+    <label for="textoInput">Texto:</label>
+    <input type="text" id="textoInput">
+    <br>
+    <button onclick="salvarTexto()">Salvar</button>
+    <button onclick="mostrarTextos()">Mostrar Todos</button>
+    <br>
+    <div id="output"></div>
+</body>
+</html>
